@@ -9,9 +9,12 @@ def export():
     """export route"""
     try:
         form_id = request.args.get('form_id', type=int)
-        groups = [int(x) for x in (request.args.get('groups', type=str)).split(',')]
+        if request.args.get('groups', type=str):
+            groups = [int(x) for x in (request.args.get('groups', type=str)).split(',')]
+        else:
+            groups = []
         export_format = request.args.get('format')
-        if form_id is None or export_format is None or export_format not in ('pdf', 'cvs', 'xls'):
+        if form_id is None or export_format is None or export_format not in ('pdf', 'csv', 'xls'):
             raise ValueError
     except (AttributeError, ValueError):
         abort(400)
@@ -27,5 +30,11 @@ def export():
                           routing_key='export',
                           body=str(task))
 
+    channel.queue_declare(queue='answer_to_export')
+    for method_frame, properties, body in channel.consume('answer_to_export'):  # pylint: disable=unused-variable
+        msg = body
+        if method_frame.delivery_tag == 1:
+            break
+
     connection.close()
-    return "Hello, World!"
+    return msg
