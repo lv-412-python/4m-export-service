@@ -4,24 +4,26 @@ import pika
 from export_service import APP
 
 
-@APP.route('/api/export/')
+@APP.route('/api/export', methods=['POST'])
 def export():
     """export route"""
     try:
-        form_id = request.args.get('form_id', type=int)
-        if request.args.get('groups', type=str):
-            groups = [int(x) for x in (request.args.get('groups', type=str)).split(',')]
+        form_id = request.form.get('form_id', type=int)
+        if request.form.get('groups', type=str):
+            groups = [int(x) for x in (request.form.get('groups', type=str)).split(',')]
         else:
             groups = []
-        export_format = request.args.get('format')
+        export_format = request.form.get('format')
         if form_id is None or export_format is None or export_format not in ('pdf', 'csv', 'xls'):
             raise ValueError
     except (AttributeError, ValueError):
         abort(400)
 
-    task = {'form_id': form_id,
-            'groups': groups,
-            'format': export_format}
+    task = {
+        'form_id': form_id,
+        'groups': groups,
+        'format': export_format
+    }
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()
