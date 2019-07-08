@@ -30,11 +30,5 @@ def export():
                           routing_key='export',
                           body=str(task))
 
-    channel.queue_declare(queue='answer_to_export')
-    for method_frame, properties, body in channel.consume('answer_to_export'):  # pylint: disable=unused-variable
-        msg = body
-        if method_frame.delivery_tag == 1:
-            break
-
     connection.close()
-    return msg
+    return "Task successfully sent to worker-service."
