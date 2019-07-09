@@ -1,4 +1,4 @@
-""" app runner """
+"""App runner."""
 from export_service import APP
 
 

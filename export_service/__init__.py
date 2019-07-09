@@ -1,4 +1,4 @@
-"""Init export service"""
+"""Init export service."""
 from flask import Flask
 from flask_restful import Api
 
