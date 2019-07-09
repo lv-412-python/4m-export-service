@@ -1,4 +1,4 @@
-"""export routes"""  # pylint: disable=cyclic-import
+"""Export routes."""  # pylint: disable=cyclic-import
 from flask import request, abort
 from flask_restful import Resource
 import pika

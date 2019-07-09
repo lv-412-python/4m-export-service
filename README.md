@@ -1,4 +1,4 @@
-# Export service [![Build Status](https://travis-ci.org/lv-412-python/4m-export-service.svg?branch=develop)](https://travis-ci.org/lv-412-python/4m-export-service) 
+# Export service [![Build Status](https://travis-ci.org/lv-412-python/export-service-repo.svg?branch=develop)](https://travis-ci.org/lv-412-python/export-service-repo) 
 ## Description
 This is the source code of the export service, part of 4m project. This service gets parameters, forms the task for worker-service, and sends it to the Rabbit.
 
