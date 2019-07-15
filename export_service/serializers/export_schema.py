@@ -11,13 +11,13 @@ class ExportInputSchema(Schema):
     to_date = fields.Date()
 
     @validates('export_format')
-    def is_in_correct_format(self, value):  # pylint: disable=no-self-use
+    def is_in_correct_format(self, value):
         """Check is export_format in correct type."""
         if value not in ('pdf', 'csv', 'xls'):
             raise ValidationError("Incorrect type.")
 
     @validates_schema
-    def check_date(self, data):  # pylint: disable=no-self-use
+    def check_date(self, data):
         """Check is date range correct."""
         try:
             if data["from_date"] > data["to_date"]:
