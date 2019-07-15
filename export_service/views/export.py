@@ -6,19 +6,21 @@ from flask_api import status
 from flask_restful import Resource
 import pika
 from export_service.serializers.export_schema import ExportInputSchema
+from export_service import APP
 
 SCHEMA = ExportInputSchema()
 
 
 class Export(Resource):
     """Export."""
-    def post(self):  # pylint: disable=no-self-use
+    def post(self):
         """ get parameters and form a task.
         :return: str: message
         :raise: 404 Error: if no parameters, or if parameters are with an incorrect type
         """
         errors = SCHEMA.validate(request.json)
         if errors:
+            APP.logger.error(errors)
             return errors, status.HTTP_400_BAD_REQUEST
 
         req_data = request.get_json()
