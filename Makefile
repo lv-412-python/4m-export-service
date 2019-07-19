@@ -1,4 +1,4 @@
-.PHONY: help install clear lint dev-env prod-env
+.PHONY: help install clear lint dev-env prod-env docker-install
 PYTHON_PATH_EXPORT_SERVICE :=  export_service
 .DEFAULT: help
 help:
@@ -19,6 +19,10 @@ install:
 	pip install setuptools --upgrade; \
 	pip install pip --upgrade; \
 	pip install -r requirements.txt;
+
+docker-install:
+	 pip3 install -r requirements.txt;
+
 
 clear:
 	rm -rf venv
