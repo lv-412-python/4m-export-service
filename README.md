@@ -13,15 +13,13 @@ For the next steps of service installation, you will need setup of Ubuntu 18.04
 ### In the project root create venv and install requirements with Make
 
 ```
-export PYTHONPATH=$PYTHONPATH:/home/.../.../4m-export-service/export-service
-```
-```
-make dev-env
-```
-#### in case of failure:
-```
-. venv/bin/activate
-pip install -r requirements.txt
+sudo docker pull rabbitmq
+sudo docker run -d --hostname my-rabbit --name some-rabbit rabbitmq:3
+
+cd export-service
+
+sudo docker build -t export_service .
+sudo docker run -d -p 5055:5055 export_service
 ```
 
 ### Run project

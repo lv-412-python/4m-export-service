@@ -58,7 +58,8 @@ class Export(Resource):
         except KeyError:
             pass
 
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='172.17.0.2',
+                                                                       port=5672))
         channel = connection.channel()
         channel.queue_declare(queue='export')
         channel.basic_publish(exchange='',

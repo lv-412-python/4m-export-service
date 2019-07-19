@@ -5,4 +5,4 @@ from export_service import APP
 
 if __name__ == '__main__':
     fileConfig("logging.config")
-    APP.run(debug=True)
+    APP.run(host="0.0.0.0", port=5055)
