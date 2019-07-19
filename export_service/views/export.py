@@ -1,19 +1,22 @@
 """Export routes."""  # pylint: disable=cyclic-import
 import uuid
 from datetime import datetime
-from flask import request
+from flask import request, session
+from flask_jwt_extended import decode_token
 from flask_api import status
 from flask_restful import Resource
 import pika
+from jwt.exceptions import ExpiredSignatureError
 from export_service.serializers.export_schema import ExportInputSchema
 from export_service import APP
 
 SCHEMA = ExportInputSchema()
+AUTH_TOKEN_KEY = 'auth_token'
 
 
 class Export(Resource):
     """Export."""
-    def post(self):
+    def post(self):  #pylint: disable=too-many-locals
         """ get parameters and form a task.
         :return: str: message
         :raise: 404 Error: if no parameters, or if parameters are with an incorrect type
@@ -57,6 +60,24 @@ class Export(Resource):
             task['to_date'] = req_data['to_date']
         except KeyError:
             pass
+
+        try:
+            access_token = session[AUTH_TOKEN_KEY]
+        except KeyError as err:
+            APP.logger.error(err.args)
+            response_obj = {
+                'error': 'Provide a valid auth token.'
+            }
+            return response_obj, status.HTTP_403_FORBIDDEN
+        try:
+            user_info = decode_token(access_token, allow_expired=True)
+            task['user_email'] = user_info['identity']
+        except ExpiredSignatureError as err:
+            APP.logger.error(err.args)
+            response_obj = {
+                'error': 'Signature expired. Please, log in again.'
+            }
+            return response_obj, status.HTTP_403_FORBIDDEN
 
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='172.17.0.2',
                                                                        port=5672))
