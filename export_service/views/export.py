@@ -79,7 +79,7 @@ class Export(Resource):
             }
             return response_obj, status.HTTP_403_FORBIDDEN
 
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='172.17.0.2',
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq',
                                                                        port=5672))
         channel = connection.channel()
         channel.queue_declare(queue='export')
