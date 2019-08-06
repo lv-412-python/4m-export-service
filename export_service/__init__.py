@@ -7,7 +7,7 @@ from flask_bcrypt import Bcrypt
 
 
 APP = Flask(__name__)
-CORS(APP)
+CORS(APP, supports_credentials=True)
 APP.secret_key = 'very_secret'
 API = Api(APP)
 JWT = JWTManager(APP)
