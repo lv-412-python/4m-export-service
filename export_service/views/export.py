@@ -7,16 +7,18 @@ from flask_api import status
 from flask_restful import Resource
 import pika
 from jwt.exceptions import ExpiredSignatureError
+import requests
 from export_service.serializers.export_schema import ExportInputSchema
 from export_service import APP
 
 SCHEMA = ExportInputSchema()
 AUTH_TOKEN_KEY = 'auth_token'
+FORM_SERVICE_URL = 'http://forms-service:5050/form'
 
 
 class Export(Resource):
     """Export."""
-    def post(self):  #pylint: disable=too-many-locals
+    def post(self):  # pylint: disable=too-many-locals
         """ get parameters and form a task.
         :return: str: message
         :raise: 404 Error: if no parameters, or if parameters are with an incorrect type
@@ -29,7 +31,6 @@ class Export(Resource):
         req_data = request.get_json()
 
         task_id = uuid.uuid4().int
-        form_id = req_data['form_id']
         export_format = req_data['export_format']
 
         try:
@@ -39,10 +40,20 @@ class Export(Resource):
 
         task = {
             'task_id': task_id,
-            'form_id': form_id,
             'groups': groups,
             'export_format': export_format
         }
+
+        url = FORM_SERVICE_URL + f"/{req_data['form_id']}"
+        response = requests.get(url=url)
+
+        if response.status_code == 200:
+            task['form_id'] = req_data['form_id']
+        else:
+            response_obj = {
+                'error': 'There is no such form.'
+                }
+            return response_obj, status.HTTP_400_BAD_REQUEST
 
         try:
             if not req_data['from_date'] and req_data['from_date'] == req_data['to_date']:
