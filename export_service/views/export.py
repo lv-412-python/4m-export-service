@@ -1,11 +1,9 @@
 """Export routes."""  # pylint: disable=cyclic-import
 import uuid
 from datetime import datetime
-from flask import request, session
-from flask_jwt_extended import decode_token
+from flask import request
 from flask_api import status
 from flask_restful import Resource
-from jwt.exceptions import ExpiredSignatureError
 import requests
 from export_service.serializers.export_schema import ExportInputSchema
 from export_service import APP
@@ -132,22 +130,24 @@ class Export(Resource):
         task_dict['export_format'] = request_data['export_format']
 
         # email
+        url = Config.USERS_SERVICE_URL + "/profile"
+        cookies = request.cookies
         try:
-            access_token = session[AUTH_TOKEN_KEY]
-        except KeyError as err:
-            APP.logger.error(err.args)
+            response = requests.get(url=url, cookies=cookies)
+        except requests.exceptions.ConnectionError:
             response_obj = {
-                'error': 'Provide a valid auth token.'
+                "error": "Can't connect to users-service."
             }
-            return response_obj, status.HTTP_403_FORBIDDEN
+            APP.logger.error(response_obj)
+            return response_obj, status.HTTP_500_INTERNAL_SERVER_ERROR
+
         try:
-            user_info = decode_token(access_token, allow_expired=True)
-            task_dict['user_email'] = user_info['identity']
-        except ExpiredSignatureError as err:
-            APP.logger.error(err.args)
+            task_dict['email'] = response.json()['email']
+        except KeyError:
             response_obj = {
-                'error': 'Signature expired. Please, log in again.'
+                "error": "Signature expired. Please, log in again."
             }
+            APP.logger.error(response_obj)
             return response_obj, status.HTTP_403_FORBIDDEN
 
         # from_date
