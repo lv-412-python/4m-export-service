@@ -11,6 +11,6 @@ WORKDIR /opt/export-service-repo
 
 EXPOSE 5050
 RUN make docker-install
+RUN chmod a+x run_service.sh
 
-ENTRYPOINT ["python3"]
-CMD ["setup.py"]
+CMD ["./run_service.sh"]
