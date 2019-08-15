@@ -13,8 +13,20 @@ from export_service.rabbitmq_setup import CHANNEL
 SCHEMA = ExportInputSchema()
 
 
+def check_authority(view):
+    """Decorator for resources"""
+    def func_wrapper(*args, **kwargs):
+        """wrapper"""
+        if request.cookies['admin'] == 'False' and request.method != 'GET':
+            return {"error": "Forbidden."}, status.HTTP_403_FORBIDDEN
+        return view(*args, **kwargs)
+    return func_wrapper
+
+
 class Export(Resource):
     """Export."""
+
+    @check_authority
     def post(self):
         """ get parameters and form a task.
         :return: str: message
