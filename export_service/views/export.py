@@ -76,6 +76,12 @@ class Export(Resource):
         except KeyError:
             pass
 
+        # session
+        task_dict['session'] = request.cookies.get('session')
+
+        # admin
+        task_dict['admin'] = request.cookies.get('admin')
+
         CHANNEL.basic_publish(exchange='',
                               routing_key='export',
                               body=str(task_dict))
