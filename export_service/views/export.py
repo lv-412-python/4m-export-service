@@ -41,17 +41,19 @@ class Export(Resource):
 
         request_data = request.get_json()
 
+        cookies = {'session': request.cookies.get('session'), 'admin': request.cookies.get('admin')}
+
         # task_id
         task_dict['task_id'] = uuid.uuid4().int
 
         # form_id
-        form_id = _get_form_id(request_data)
+        form_id = _get_form_id(request_data, cookies)
         if not isinstance(form_id, int):
             return form_id
         task_dict['form_id'] = form_id
 
         # groups
-        groups = _get_groups(request_data)
+        groups = _get_groups(request_data, cookies)
         if not isinstance(groups, list):
             return groups
         task_dict['group_id'] = groups
@@ -60,7 +62,7 @@ class Export(Resource):
         task_dict['export_format'] = request_data['export_format']
 
         # email
-        user_email = _get_user_email()
+        user_email = _get_user_email(cookies)
         if not isinstance(user_email, str):
             return user_email
         task_dict['email'] = user_email
@@ -89,10 +91,10 @@ class Export(Resource):
         return "Task successfully sent to worker-service."
 
 
-def _get_form_id(request_data):
+def _get_form_id(request_data, cookies):
     url = Config.FORM_SERVICE_URL + f"/{request_data['form_id']}"
     try:
-        response = requests.get(url=url)
+        response = requests.get(url=url, cookies=cookies)
     except requests.exceptions.ConnectionError:
         response_obj = {
             "error": "Can't connect to form-service."
@@ -117,7 +119,7 @@ def _get_form_id(request_data):
     return request_data['form_id']
 
 
-def _get_groups(request_data):
+def _get_groups(request_data, cookies):
     try:
         groups = request_data['groups']
     except KeyError:
@@ -125,7 +127,7 @@ def _get_groups(request_data):
 
     try:
         url = Config.GROUPS_SERVICE_URL
-        response = requests.get(url=url+"/1")
+        response = requests.get(url=url+"/1", cookies=cookies)
     except requests.exceptions.ConnectionError:
         response_obj = {
             "error": "Can't connect to groups-service."
@@ -140,23 +142,23 @@ def _get_groups(request_data):
         APP.logger.error(response_obj)
         return response_obj, status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    groups = _if_groups_exist(url, groups)
+    groups = _if_groups_exist(url, groups, cookies)
     if not isinstance(groups, list):
         return groups
 
-    groups = _if_groups_assigned_to_form(url, groups, request_data)
+    groups = _if_groups_assigned_to_form(url, groups, request_data, cookies)
     if not isinstance(groups, list):
         return groups
 
-    groups = _if_groups_answered_form(request_data, groups)
+    groups = _if_groups_answered_form(request_data, groups, cookies)
 
     return groups
 
 
-def _if_groups_exist(url, groups):
+def _if_groups_exist(url, groups, cookies):
     groups_do_not_exist = []
     for group in groups:
-        response = requests.get(url=url + f"/{group}")
+        response = requests.get(url=url + f"/{group}", cookies=cookies)
         if response.status_code == 404:
             groups_do_not_exist.append(group)
 
@@ -175,10 +177,10 @@ def _if_groups_exist(url, groups):
     return groups
 
 
-def _if_groups_assigned_to_form(url, groups, request_data):
+def _if_groups_assigned_to_form(url, groups, request_data, cookies):
     groups_not_assigned_to_form = []
     for group in groups:
-        response = requests.get(url=url + f"/{group}")
+        response = requests.get(url=url + f"/{group}", cookies=cookies)
         if request_data['form_id'] not in response.json()['assigned_to_forms']:
             groups_not_assigned_to_form.append(group)
 
@@ -199,11 +201,11 @@ def _if_groups_assigned_to_form(url, groups, request_data):
     return groups
 
 
-def _if_groups_answered_form(request_data, groups):
+def _if_groups_answered_form(request_data, groups, cookies):
 
     url = Config.ANSWERS_SERVICE_URL + f"?form_id={request_data['form_id']}"
     try:
-        response = requests.get(url=url)
+        response = requests.get(url=url, cookies=cookies)
     except requests.exceptions.ConnectionError:
         response_obj = {
             "error": "Can't connect to answers-service."
@@ -221,8 +223,7 @@ def _if_groups_answered_form(request_data, groups):
     groups_did_not_answer_form = []
 
     for group in groups:
-        response = requests.get(url=url+f"&group_id={group}")
-        print(response)
+        response = requests.get(url=url+f"&group_id={group}", cookies=cookies)
         if response.status_code == 404:
             groups_did_not_answer_form.append(group)
 
@@ -243,9 +244,8 @@ def _if_groups_answered_form(request_data, groups):
     return groups
 
 
-def _get_user_email():
+def _get_user_email(cookies):
     url = Config.USERS_SERVICE_URL + "/profile"
-    cookies = request.cookies
     try:
         response = requests.get(url=url, cookies=cookies)
     except requests.exceptions.ConnectionError:
